@@ -6,6 +6,7 @@
 #include <vector>
 #include <cstdlib>
 #include <ctime>
+#include <stdint.h>
 
 // OpenCV头文件
 #include <opencv2/highgui/highgui.hpp>
@@ -21,14 +22,17 @@
 #include "HostDef.h"
 #include "msglink.hpp"
 #include "Queue.h"
+#include "DataFrame.h"
+#include "MySerial.h"
 
 using namespace std;
 using namespace serial;
 using namespace cv;
 using boost::thread;
 
+#define SlaveConnected 0
 
-Serial slave;// 从机通信串口
+MySerial slave;// 从机通信串口
 char buf[MAX_BUF_SIZE];// 缓冲区
 VideoCapture cap;// 摄像头
 bool backprojMode = false; //表示是否要进入反向投影模式，ture表示准备进入反向投影模式
@@ -40,37 +44,23 @@ Rect selection, trackWindow;//用于保存鼠标选择的矩形框
 int vmin = 10, vmax = 256, smin = 30;
 MsgLink<DispMsg> linkd;
 
-void initSerialArg(int argc, char** argv);
-void initSerial(string port, uint baud = baudRate);
-void initCameraArg(int argc, char** argv);
-void initCamera(int deviceID);
-void initWindow();
-// 后台线程处理图像
-void processImage(MsgLink<DispMsg>* ld);
-// 向从机发送信息
-void sendInfo2Slave(float x,float y,float z);
-// 鼠标事件回调函数
-void onMouse(int event, int x, int y, int, void*);
-// 循环工作，读取图像
-void circleWork();
-/*
-构造一帧数据，参数data为数据，frame为数据帧,count为数据字节数
-不允许原地操作，最大255字节
-*/
-void makeDataFrame(void* data, void* frame, size_t count);
-
 int main(int argc, char** argv)
 {
 	vector<thread> th;
 	system("title 四旋翼倒立摆 主机端 V1.0");
-	//th.push_back(thread(initSerialArg, argc, argv));
+	// 多线程同步初始化
+#if SlaveConnected
+	th.push_back(thread(initSerialArg, argc, argv));
+#endif
 	th.push_back(thread(initCameraArg, argc, argv));
 	for (auto it = th.begin();it != th.end();++it)
 	{
 		it->join();
 	}
+	// 开启后台处理图像线程
 	thread processTh(boost::bind(processImage, &linkd));
 	processTh.detach();
+	// 开始工作
 	circleWork();
 	return 0;
 }
@@ -110,18 +100,22 @@ void initSerialArg(int argc, char** argv)
 void initSerial(string port, uint baud)
 {
 	string tmp;
+	// 设置串口属性并开启
 	slave.setPort(port);
 	slave.setBaudrate(baud);
 	slave.setTimeout(Timeout::max(), 1000, 0, 1000, 0);
 	slave.open();
-	Sleep(1000);
+	// 检测开启状态
+	Sleep(100);
 	if (slave.isOpen() == false)
 	{
-		cout << __LINE__ << endl;
+		cout << __LINE__ << ":";
 		goto serialErr;
 	}
 	return;
+	// 向从机发送握手信息
 	slave.write(testComHost);
+	// 检查回收的握手信息
 	for (auto i = 0;i < 3;++i)
 	{
 		slave.readline(tmp);
@@ -149,15 +143,24 @@ void initCameraArg(int argc, char** argv)
 	else
 	{// 命令行提供了摄像头参数
 		int id;
-		sscanf_s(argv[3], "%d", &id);
-		initCamera(id);
+		if(sscanf_s(argv[3], "%d", &id) == 1)
+		{
+			// 直接读到ID
+			initCamera(id);
+		}
+		else
+		{
+			initCamera(string(argv[3]));
+		}
 	}
 }
 
-void initCamera(int deviceID)
+template<typename T>
+void initCamera(T deviceID)
 {
 	try
 	{
+		// 打开摄像头并设置参数
 		cap.open(deviceID);
 		cap.set(CAP_PROP_FRAME_WIDTH, VIDEO_WIDTH);
 		cap.set(CAP_PROP_FRAME_HEIGHT, VIDEO_HEIGHT);
@@ -168,17 +171,19 @@ void initCamera(int deviceID)
 			system("pause");
 			exit(1);
 		}
-		if ((!floatCmp(cap.get(CAP_PROP_FRAME_WIDTH),VIDEO_WIDTH)) ||
+		Mat tmp;
+		cap >> tmp;
+		cout << cap.get(CAP_PROP_FRAME_WIDTH) << ' ';
+		cout << cap.get(CAP_PROP_FRAME_HEIGHT) << ' ';
+		cout << cap.get(CAP_PROP_FPS) << endl;
+		/*if ((!floatCmp(cap.get(CAP_PROP_FRAME_WIDTH),VIDEO_WIDTH)) ||
 			(!floatCmp(cap.get(CAP_PROP_FRAME_HEIGHT),VIDEO_HEIGHT)) ||
 			(!floatCmp(cap.get(CAP_PROP_FPS), VIDEO_FPS)))
 		{
 			cerr << "摄像头参数不匹配" << endl;
-			cerr << cap.get(CAP_PROP_FRAME_WIDTH) << ' ' << floatCmp(cap.get(CAP_PROP_FRAME_WIDTH), VIDEO_WIDTH) << endl;
-			cerr << cap.get(CAP_PROP_FRAME_HEIGHT) << ' ' << floatCmp(cap.get(CAP_PROP_FRAME_HEIGHT), VIDEO_HEIGHT) << endl;
-			cerr << cap.get(CAP_PROP_FPS) << ' ' << floatCmp(cap.get(CAP_PROP_FPS), VIDEO_FPS) << endl;
 			system("pause");
 			exit(1);
-		}
+		}*/
 		cout << "摄像头初始化成功。" << endl;
 		return;
 	}
@@ -193,7 +198,8 @@ void initCamera(int deviceID)
 void initWindow()
 {
 	namedWindow(histWindowName, 0);
-	namedWindow(videoWindowName, 0);
+	namedWindow(videoWindowName, WINDOW_AUTOSIZE);
+	imshow(videoWindowName, Mat(VIDEO_WIDTH, VIDEO_HEIGHT, CV_8UC3, Scalar(0, 0, 0)));
 	setMouseCallback(videoWindowName, onMouse, nullptr);//消息响应机制
 	createTrackbar("Vmin", videoWindowName, &vmin, 256, nullptr);//createTrackbar函数的功能是在对应的窗口创建滑动条，滑动条Vmin,vmin表示滑动条的值，最大为256
 	createTrackbar("Vmax", videoWindowName, &vmax, 256, nullptr);//最后一个参数为0代表没有调用滑动拖动的响应函数
@@ -216,7 +222,7 @@ void processImage(MsgLink<DispMsg>* ld)
 	int k = 0;
 	char tmp[10];
 	initWindow();
-	while (1)
+	while (true)
 	{
 		auto md = ld->receive();
 		if (md != nullptr)
@@ -254,7 +260,7 @@ void processImage(MsgLink<DispMsg>* ld)
 					histimg = Scalar::all(0);//与按下'c'键是一样的，这里的all(0)表示的是标量全部清0
 					int binW = histimg.cols / hsize;  //histing是一个200*300的矩阵，hsize应该是每一个bin的宽度，也就是histing矩阵能分出几个bin出来
 					Mat buf(1, hsize, CV_8UC3);//定义一个缓冲单bin矩阵
-					for (int i = 0; i < hsize; i++)//saturate_case函数为从一个初始类型准确变换到另一个初始类型
+					for (int i = 0; i < hsize; i++)//saturate_cast函数为从一个初始类型准确变换到另一个初始类型
 						buf.at<Vec3b>(i) = Vec3b(saturate_cast<uchar>(i*180. / hsize), 255, 255);//Vec3b为3个char值的向量
 					cvtColor(buf, buf, CV_HSV2BGR);//将hsv又转换成bgr
 
@@ -290,7 +296,7 @@ void processImage(MsgLink<DispMsg>* ld)
 				{
 					circle(image, pts[i], 1, Scalar(255, 0, 0), 3, 8, 0);
 				}
-				circle(image, pts[4], norm(pts[4] - ((pts[0] + pts[3]) / 2)), Scalar(0, 255, 0), 3, 8, 0);
+				circle(image, pts[4], static_cast<int>(norm(pts[4] - ((pts[0] + pts[3]) / 2))), Scalar(0, 255, 0), 3, 8, 0);
 			}
 			if (selectObject && selection.width > 0 && selection.height > 0)
 			{
@@ -304,20 +310,20 @@ void processImage(MsgLink<DispMsg>* ld)
 
 			imshow(videoWindowName, image);
 			imshow(histWindowName, histimg);
-			//sendInfo2Slave(pts[4].x - VIDEO_WIDTH / 2, pts[4].y - VIDEO_HEIGHT / 2, 0);
+			sendInfo2Slave(pts[4].x - VIDEO_WIDTH / 2, pts[4].y - VIDEO_HEIGHT / 2, 0);
 		}
 		switch(waitKey(10))
 		{
-		case 27:
+		case 27:	// ESC键结束图像处理
 			goto outLoop;
-		case 'b':             //反向投影模型交替
+		case 'b':	//反向投影模型交替
 			backprojMode = !backprojMode;
 			break;
-		case 'c':            //清零跟踪目标对象
+		case 'c':	//清零跟踪目标对象
 			trackObject = 0;
 			histimg = Scalar::all(0);
 			break;
-		case 'h':          //显示直方图交替
+		case 'h':	//显示直方图交替
 			showHist = !showHist;
 			if (!showHist)
 			{
@@ -337,23 +343,16 @@ outLoop:
 
 void sendInfo2Slave(float x, float y, float z)
 {
-	static unsigned __int8 data[20] = { 0xA5, 0x5A, 0x12, 0xA1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 30, 0, 0xAA};
-	int16_8 tmp;
-	tmp.i16 = static_cast<unsigned __int16>(x) * 10;
-	data[4] = tmp.i8[1];
-	data[5] = tmp.i8[0];
-	tmp.i16 = static_cast<unsigned __int16>(y) * 10;
-	data[6] = tmp.i8[1];
-	data[7] = tmp.i8[0];
-	tmp.i16 = static_cast<unsigned __int16>(z) * 10;
-	data[8] = tmp.i8[1];
-	data[9] = tmp.i8[0];
-	data[18] = 0;
-	// 校验
-	for (auto i = 2;i < 12;++i)
-		data[18] += data[i];
-	// 串口写数据
-	slave.write(data,20);
+	int16_t data[3];
+	uint8_t frame[20];
+	data[0] = static_cast<int16_t>(x * 10.0 + 0.5);
+	data[1] = static_cast<int16_t>(y * 10.0 + 0.5);
+	data[2] = static_cast<int16_t>(z * 10.0 + 0.5);
+	auto size = makeDataFrame(data, frame, 3 * sizeof(int16_t));
+#if SlaveConnected
+	slave.write(frame,size);
+#endif
+	printf("(%.1f, %.1f, %.1f)\r", x, y, z);
 }
 
 void onMouse(int event, int x, int y, int, void*)
@@ -386,7 +385,7 @@ void circleWork()
 {
 	while (true)
 	{
-		DispMsg* md = linkd.prepareMsg();
+		auto md = linkd.prepareMsg();
 		cap >> md->image;
 		linkd.send();
 		if (linkd.isClosed())
