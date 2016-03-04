@@ -69,23 +69,23 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>C:\ProgramData\MinGW64\include\boost;C:\Users\轩轩\Documents\代码\serial\include;$(INCLUDE);$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
-    <LibraryPath>C:\ProgramData\MinGW64\include\boost\libs;C:\ProgramData\MinGW64\include\boost\stage\lib\x86;C:\Users\轩轩\Documents\代码\serial\visual_studio\Debug;$(LIB_X86);$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\ProgramData\MinGW64\include\boost;C:\ProgramData\ffmpeg\include;C:\Users\轩轩\Documents\代码\serial\include;$(INCLUDE);$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <LibraryPath>C:\ProgramData\ffmpeg\lib;C:\ProgramData\MinGW64\include\boost\libs;C:\ProgramData\MinGW64\include\boost\stage\lib\x86;C:\Users\轩轩\Documents\代码\serial\visual_studio\Debug;$(LIB_X86);$(LibraryPath)</LibraryPath>
     <ExecutablePath>C:\Program Files\opencv\build\x86\vc12;$(VC_ExecutablePath_x86);$(WindowsSDK_ExecutablePath);$(VS_ExecutablePath);$(MSBuild_ExecutablePath);$(SystemRoot)\SysWow64;$(FxCopDir);$(PATH);</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>C:\ProgramData\MinGW64\include\boost;C:\Users\轩轩\Documents\代码\serial\include;$(INCLUDE);$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
-    <LibraryPath>C:\ProgramData\MinGW64\include\boost\libs;C:\ProgramData\MinGW64\include\boost\stage\lib\x86;C:\Users\轩轩\Documents\代码\serial\visual_studio\Release;$(LIB_X86);$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\ProgramData\MinGW64\include\boost;C:\ProgramData\ffmpeg\include;C:\Users\轩轩\Documents\代码\serial\include;$(INCLUDE);$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <LibraryPath>C:\ProgramData\ffmpeg\lib;C:\ProgramData\MinGW64\include\boost\libs;C:\ProgramData\MinGW64\include\boost\stage\lib\x86;C:\Users\轩轩\Documents\代码\serial\visual_studio\Release;$(LIB_X86);$(LibraryPath)</LibraryPath>
     <ExecutablePath>C:\Program Files\opencv\build\x86\vc12;$(VC_ExecutablePath_x86);$(WindowsSDK_ExecutablePath);$(VS_ExecutablePath);$(MSBuild_ExecutablePath);$(SystemRoot)\SysWow64;$(FxCopDir);$(PATH);</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>C:\ProgramData\MinGW64\include\boost;C:\Users\轩轩\Documents\代码\serial\include;$(INCLUDE);$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
-    <LibraryPath>C:\ProgramData\MinGW64\include\boost\libs;C:\ProgramData\MinGW64\include\boost\stage\lib\x64;C:\Users\轩轩\Documents\代码\serial\visual_studio\x64\Debug;$(LIB_X64);$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\ProgramData\MinGW64\include\boost;C:\ProgramData\ffmpeg\include;C:\Users\轩轩\Documents\代码\serial\include;$(INCLUDE);$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <LibraryPath>C:\ProgramData\ffmpeg\lib;C:\ProgramData\MinGW64\include\boost\libs;C:\ProgramData\MinGW64\include\boost\stage\lib\x64;C:\Users\轩轩\Documents\代码\serial\visual_studio\x64\Debug;$(LIB_X64);$(LibraryPath)</LibraryPath>
     <ExecutablePath>C:\Program Files\opencv\build\x64\vc12;$(VC_ExecutablePath_x64);$(WindowsSDK_ExecutablePath);$(VS_ExecutablePath);$(MSBuild_ExecutablePath);$(FxCopDir);$(PATH);</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>C:\ProgramData\MinGW64\include\boost;C:\Users\轩轩\Documents\代码\serial\include;$(INCLUDE);$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
-    <LibraryPath>C:\ProgramData\MinGW64\include\boost\libs;C:\ProgramData\MinGW64\include\boost\stage\lib\x64;C:\Users\轩轩\Documents\代码\serial\visual_studio\x64\Release;$(LIB_X64);$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\ProgramData\MinGW64\include\boost;C:\ProgramData\ffmpeg\include;C:\Users\轩轩\Documents\代码\serial\include;$(INCLUDE);$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <LibraryPath>C:\ProgramData\ffmpeg\lib;C:\ProgramData\MinGW64\include\boost\libs;C:\ProgramData\MinGW64\include\boost\stage\lib\x64;C:\Users\轩轩\Documents\代码\serial\visual_studio\x64\Release;$(LIB_X64);$(LibraryPath)</LibraryPath>
     <ExecutablePath>C:\Program Files\opencv\build\x64\vc12;$(VC_ExecutablePath_x64);$(WindowsSDK_ExecutablePath);$(VS_ExecutablePath);$(MSBuild_ExecutablePath);$(FxCopDir);$(PATH);</ExecutablePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -93,9 +93,10 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>HAVE_FFMPEG;_MBCS;%(PreprocessorDefinitions);</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(BOOST_LIB_DBG);serial.lib;$(AddDepDebug);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;postproc.lib;swresample.lib;swscale.lib;$(BOOST_LIB_DBG);serial.lib;$(AddDepDebug);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -103,9 +104,10 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>HAVE_FFMPEG;_MBCS;%(PreprocessorDefinitions);</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(BOOST_LIB_DBG);serial.lib;$(AddDepDebug);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;postproc.lib;swresample.lib;swscale.lib;$(BOOST_LIB_DBG);serial.lib;$(AddDepDebug);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -116,11 +118,12 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <PreprocessorDefinitions>HAVE_FFMPEG;_MBCS;%(PreprocessorDefinitions);</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>$(BOOST_LIB_RES);serial.lib;$(AddDepRelease);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;postproc.lib;swresample.lib;swscale.lib;$(BOOST_LIB_RES);serial.lib;$(AddDepRelease);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -131,11 +134,12 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <PreprocessorDefinitions>HAVE_FFMPEG;_MBCS;%(PreprocessorDefinitions);</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>$(BOOST_LIB_RES);serial.lib;$(AddDepRelease);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;postproc.lib;swresample.lib;swscale.lib;$(BOOST_LIB_RES);serial.lib;$(AddDepRelease);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
