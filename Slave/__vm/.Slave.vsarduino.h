@@ -107,4 +107,6 @@ typedef long caddr_t;
 #define portInputRegister(P)
 #define portModeRegister(P)
 #include <..\Slave\Slave.ino>
+#include <..\..\QuadcopterInvertedPendulum\CommonDef.h>
+#include <..\Slave\SlaveDef.h>
 #endif

@@ -1,7 +1,10 @@
-#include<Servo.h>
-Servo myservo;
+#include "../CommonDef.h"
+#include "PID/PID.h"
+#include "SlaveDef.h"
+
 String inChar = "";
-float kp = 20, ki = 0.0000, kd = 0, r1, r2, kw = 18;
+float r1, r2, kw = 18;
+PID pid1(kp, ki, kd), pid2(kp, ki, kd);
 float offset = 0;
 int count_right = 0;
 int count_left = 0;
@@ -10,168 +13,83 @@ int Speed_need = 0; int Turn_need = 0;
 float diff_speeds, diff_speeds_all;
 unsigned char Re_buf[11], counter = 0;
 unsigned char sign = 0;
-int M11 = 12;
-int M12 = 11;
-int M21 = 10;
-int M22 = 9;
-#define led 13
-#define kick1 2
-#define kick2 3
 unsigned long timer;
 int label = 0;
 float a[3], w[3], Angle[3], T;
 short sAccelerat[3], sAngleVelocity[3], sAngle[3], sT;
-void Code_right() { if (r1 >= 0) { count_right += 1; } else { count_right -= 1; } }//if only +,can't stand up ç¼–ç å™¨ç ç›˜è®¡æ•°åŠ ä¸€ 
-void Code_left() { if (r2 >= 0) { count_left += 1; } else { count_left -= 1; } }// ç¼–ç å™¨ç ç›˜è®¡æ•°åŠ ä¸€ 
-void kick(int time)
-{
-	digitalWrite(kick1, HIGH);
-	delay(time);
-	digitalWrite(kick1, LOW);
-}
+
 unsigned long timestart;
-void setup() {
-	// initialize serial:
-	Serial2.begin(115200);
-	Serial1.begin(115200);
-	pinMode(led, OUTPUT);
-	pinMode(M11, OUTPUT); analogWrite(M11, 0);
-	pinMode(M12, OUTPUT); analogWrite(M12, 0);
-	pinMode(M21, OUTPUT); analogWrite(M21, 0);
-	pinMode(M22, OUTPUT); analogWrite(M22, 0);
-	pinMode(22, INPUT);
-	pinMode(26, INPUT);
-	pinMode(kick1, OUTPUT);
-	pinMode(kick2, OUTPUT);
-	digitalWrite(kick1, LOW);
-	digitalWrite(kick2, LOW);
-	attachInterrupt(22, Code_right, FALLING); attachInterrupt(26, Code_left, FALLING);
-	myservo.attach(52);
-	delay(5000);
-	myservo.write(40);
-	delay(2000);
-	while (Angle[0]>16)
-	{
-		delay(100);
-	}
+
+int stickPos;
+// ÓÒÆð 1Î»ÎªA 0Î»ÎªB
+uchr codeState;
+
+// ³õÊ¼»¯IO¿Ú
+void initPin();
+// ³õÊ¼»¯´®¿Ú
+void initSerial();
+// LEDÉÁË¸
+void ledBlink();
+// ´¦ÀíAÏß±ä»¯
+void codeA();
+// ´¦ÀíBÏß±ä»¯
+void codeB();
+
+void setup()
+{
+	initSerial();
+	initPin();
 	timestart = millis();
 }
-void SetMotor(float v1, float v2)
-{
-	if (v1>255) { v1 = 255; analogWrite(M11, 0); analogWrite(M12, v1); }
-	else if (v1>0) { analogWrite(M11, 0); analogWrite(M12, v1); }
-	else if (v1>-255) { analogWrite(M12, 0); analogWrite(M11, -v1); }
-	else { v1 = -255; analogWrite(M12, 0); analogWrite(M11, -v1); }
 
-	if (v2>255) { v2 = 255; analogWrite(M21, 0); analogWrite(M22, v2); }
-	else if (v2>0) { analogWrite(M21, 0); analogWrite(M22, v2); }
-	else if (v2>-255) { analogWrite(M22, 0); analogWrite(M21, -v2); }
-	else { v2 = -255; analogWrite(M22, 0); analogWrite(M21, -v2); }
-}
-
-float PID1(float e, float kp, float ki, float kd)
-{
-	static float es = 0, sum = 0;
-	float r;
-	sum += e;
-	r = kp*e + ki*sum + kd*(e - es);
-	es = e;
-	return r;
-}
-float PID2(float e, float kp, float ki, float kd)
-{
-	static float es = 0, sum = 0;
-	float r;
-	sum += e;
-	r = kp*e + ki*sum + kd*(e - es);
-	es = e;
-	return r;
-}
-int label3 = 0;
 unsigned long timer3;
 int switchone = 0;
 int stick = 0;
 int start = 0;
 int getin = 0;
-void loop() {
-	if (start == 0 && millis() - timestart >= 3000)
-	{
-		myservo.write(160);
-		start = 1;
-	}
 
-	if ((label3 == 1) && (millis() - timer3 >= 200))
-	{
-
-		count_right = 0;
-		count_left = 0;
-		speeds = 0;
-		speeds_filter = 0;
-		positions = 0;
-		Speed_need = 0;
-		Turn_need = 0;
-		diff_speeds = 0;
-		diff_speeds_all = 0;
-		analogWrite(M11, 0);
-		analogWrite(M12, 0);
-		analogWrite(M21, 0);
-		analogWrite(M22, 0);
-		attachInterrupt(22, Code_right, FALLING); attachInterrupt(26, Code_left, FALLING);
-		switchone = 0;
-		label3 = 0;
-	}
-	if (sign == 0) return;//signä¸ºæ•°æ®æ›´æ–°æ ‡å¿—ï¼Œæ¯éš”10msæ›´æ–°ä¸€æ¬¡ï¼Œä¹Ÿå°±æ˜¯è¯´ä»¥ä¸‹ä»£ç æ¯éš”10msæŽ§åˆ¶ä¸€æ¬¡ã€?
+void loop()
+{
+	if (sign == 0) return;//signÎªÊý¾Ý¸üÐÂ±êÖ¾£¬Ã¿¸ô10ms¸üÐÂÒ»´Î£¬Ò²¾ÍÊÇËµÒÔÏÂ´úÂëÃ¿¸ô10ms¿ØÖÆÒ»´Î¡£
 	if (label == 1)
 	{
-		if ((Angle[0]>1 && r1<0 && w[0]>2) || getin == 1)
+		if ((Angle[0] > 1 && r1 < 0 && w[0] > 2) || getin == 1)
 		{
 			getin = 1;
-			SetMotor(0, 0);
 			switchone = 1;
-			if (Angle[0]>offset)
+			if (Angle[0] > offset)
 			{
-				digitalWrite(kick1, HIGH);
-				delay(400);
-				digitalWrite(kick1, LOW);
 				label = 0;
 				delay(4000);
-				myservo.write(40);
 				getin = 0;
-				while (Angle[0]>16)
+				while (Angle[0] > 16)
 				{
 					delay(100);
 				}
-				label3 = 1;
 				timer3 = millis();
-				stick = 1;
 			}
 			//attachInterrupt(22, Code_right, FALLING);attachInterrupt(26, Code_left, FALLING);
 		}
 	}
-	if (stick == 1 && millis() - timer3 >= 3000)
-	{
-		myservo.write(160);
-		stick = 0;
-	}
 	sign = 0;
 	Angle[0] = Angle[0];
 	//kd = (float)analogRead(0)/1024*200;
-	r1 = PID1(Angle[0], kp, ki, kd);
-	r1 = r1 + 40 * (r1 / abs(r1)) + w[0] * kw;//PID1ã€PID2å‡½æ•°å°±æ˜¯ç¬¬å››èŠ‚çš„PIDå‡½æ•°ï¼Œä¸ºäº†åŒºåˆ†å·¦å³è½®ï¼Œæ‰€ä»¥åˆ†æˆä¸¤ä¸ªã€?
-	r2 = PID2(Angle[0], kp, ki, kd);
+	r1 = pid1.Update(Angle[0], Angle[0]);
+	r1 = r1 + 40 * (r1 / abs(r1)) + w[0] * kw;//PID1¡¢PID2º¯Êý¾ÍÊÇµÚËÄ½ÚµÄPIDº¯Êý£¬ÎªÁËÇø·Ö×óÓÒÂÖ£¬ËùÒÔ·Ö³ÉÁ½¸ö¡£
+	r2 = pid2.Update(Angle[0], Angle[0]);
 	r2 = r2 + 40 * (r2 / abs(r2)) + w[0] * kw;
 	///////////////////////////////////////////////////////////////////////////
-	speeds = (count_left + count_right)*0.5;
+	speeds = (count_left + count_right) * 0.5;
 	diff_speeds = count_left - count_right;
 	diff_speeds_all += diff_speeds;
-	speeds_filter *= 0.85;  //ä¸€é˜¶äº’è¡¥æ»¤æ³?
-	speeds_filter += speeds*0.15;
+	speeds_filter *= 0.85; //Ò»½×»¥²¹ÂË²¨
+	speeds_filter += speeds * 0.15;
 	positions += speeds_filter;
 	positions += Speed_need;
-	positions = constrain(positions, -2300, 2300);//æŠ—ç§¯åˆ†é¥±å’?
-												  ////////////////////
-	r1 = r1 + 3.1*speeds_filter + 0.06*positions;
-	r2 = r2 + 3.1*speeds_filter + 0.06*positions;
+	positions = constrain(positions, -2300, 2300);//¿¹»ý·Ö±¥ºÍ 
+	////////////////////
+	r1 = r1 + 3.1 * speeds_filter + 0.06 * positions;
+	r2 = r2 + 3.1 * speeds_filter + 0.06 * positions;
 	//////////////////////////////////////////////////////////
 	r2 = r2 + Turn_need;
 	r1 = r1 - Turn_need;
@@ -185,27 +103,23 @@ void loop() {
 	}
 	if (switchone == 0)
 	{
-		SetMotor(r1, r2);//è®¾ç½®ç”µæœºè½¬é€Ÿã€?
 	}
-	//Serial2.print("angle x:");
-	Serial2.print("S" + String(int(Angle[0])) + "E");//x
-	Serial2.print("A" + String(int(w[0])) + "B");//y
-												 //Serial2.print("A"+String(int(offset))+"B");
-	Serial2.print("V" + String(int(count_left)) + "C");
 	count_left = 0;
 	count_right = 0;
 	//delay(100);
 }
 
-void serialEvent1() {
-	while (Serial1.available()) {        //char inChar = (char)Serial.read(); Serial.print(inChar); //Output Original Data, use this code 
+void serialEvent1()
+{
+	while (Serial1.available())
+	{ //char inChar = (char)Serial.read(); Serial.print(inChar); //Output Original Data, use this code 
 
 		Re_buf[counter] = (unsigned char)Serial1.read();
-		if (counter == 0 && Re_buf[0] != 0x55) return;      //ç¬?å·æ•°æ®ä¸æ˜¯å¸§å¤?             
+		if (counter == 0 && Re_buf[0] != 0x55) return; //µÚ0ºÅÊý¾Ý²»ÊÇÖ¡Í·              
 		counter++;
-		if (counter == 11)             //æŽ¥æ”¶åˆ?1ä¸ªæ•°æ?
+		if (counter == 11) //½ÓÊÕµ½11¸öÊý¾Ý
 		{
-			counter = 0;               //é‡æ–°èµ‹å€¼ï¼Œå‡†å¤‡ä¸‹ä¸€å¸§æ•°æ®çš„æŽ¥æ”¶ 
+			counter = 0; //ÖØÐÂ¸³Öµ£¬×¼±¸ÏÂÒ»Ö¡Êý¾ÝµÄ½ÓÊÕ 
 			switch (Re_buf[1])
 			{
 			case 0x51:
@@ -229,64 +143,81 @@ void serialEvent1() {
 		}
 	}
 }
-void serialEvent2()
+
+void initPin()
 {
-	//String inChar="";
-	String temp = "";
-	while (Serial2.available()) {
-		// get the new byte:
-		inChar = inChar + (char)Serial2.read();
-		delay(30);
-	}
-	// add it to the inputString:
-	//////////////////if(inChar=="1")
-	/////////{
-	//analogWrite(M11,255);
-	//analogWrite(M12,255);
-	//analogWrite(M21,255);
-	//analogWrite(M22,255);
-	//detachInterrupt(22);
-	//detachInterrupt(26);
-	//digitalWrite(kick1,HIGH);
-	// kick(200);
-
-
-	// /////////////}
-	switch (inChar[0]) {
-	case 'a': {Speed_need = 200; Turn_need = 0; positions = 300; inChar = ""; }; break;//Go
-	case 'b': {Speed_need = 20; Turn_need = -20; positions = 10; inChar = ""; }; break;//right
-	case 'c': {Speed_need = 20; Turn_need = 20; positions = 10; inChar = ""; }; break;//left 
-	case 'd': {Speed_need = 0; Turn_need = 0; positions = 0; inChar = ""; }; break;
-		//default:Speed_need=0;Turn_need=0;positions=0;break;//stop
-	}
-	//////////////////////////////////////////////////             ////////////////////////////////////////////////////////////////////////////////////////
-	//Serial2.println(inChar);
-	for (int i = 0; inChar[i] != '\0'; i++)
-	{
-		if (inChar[i] == 'G')
-		{
-			i++;
-			for (i; inChar[i] != '\0'; i++)
-			{
-				if (inChar[i] == 'H')
-				{
-					offset = temp.toInt();
-					inChar = "";
-					temp = "";
-					label = 1;
-					timer = millis();
-					break;
-				}
-				temp = temp + inChar[i];
-
-			}
-			break;
-		}
-	}
-	//Serial2.print("A"+temp+"B");
-
-
+	pinMode(led, OUTPUT);
+	pinMode(CodePinA, INPUT_PULLUP);
+	pinMode(CodePinB, INPUT_PULLUP);
+	attachInterrupt(CodePinA, codeA, CHANGE);
+	attachInterrupt(CodePinB, codeB, CHANGE);
 }
 
+void initSerial()
+{
+	Serial2.begin(baudRate);
+	Serial1.begin(baudRate);
+	while (!Serial1.available());
+	for (int i = 0; i < 3;++i)
+	{
+		String tmp = Serial1.readString();
+		if(strstr(tmp.c_str(), testComHost) != NULL)
+		{
+			// ÕÒµ½ÎÕÊÖ×Ö·û´®
+			Serial1.println(testComSlave);
+		}
+	}
+	ledBlink();
+}
 
+void ledBlink()
+{
+	for (int i = 0; i < 3;++i)
+	{
+		digitalWrite(led, HIGH);
+		delay(200);
+		digitalWrite(led, LOW);
+		delay(200);
+	}
+}
 
+void codeA()
+{
+	if(digitalRead(CodePinA) != (codeState >> 1))
+	{
+		switch(codeState)
+		{
+		case 3:case 0:
+			++stickPos;
+			break;
+		case 1:case 2:
+			--stickPos;
+			break;
+		default:
+			codeState = 0;
+			break;
+		}
+		codeState ^= 2;
+	}
+}
+
+void codeB()
+{
+	if (digitalRead(CodePinB) != codeState & 1)
+	{
+		switch (codeState)
+		{
+		case 3:case 0:
+			--stickPos;
+			break;
+		case 1:case 2:
+			++stickPos;
+			break;
+		default:
+			codeState = 0;
+			break;
+		}
+		codeState ^= 2;
+		codeState ^= 1;
+	}
+}
