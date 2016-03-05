@@ -26,6 +26,8 @@ uchr codeState;
 void initPin();
 // 初始化串口
 void initSerial();
+// 初始化定时器
+void initTimer();
 // 处理A线变化
 void codeA();
 // 处理B线变化
@@ -37,10 +39,7 @@ void setup()
 {
 	initSerial();
 	initPin();
-	myTimer = new DueTimer(Timer.getAvailable());
-	myTimer -> attachInterrupt(doTimer);
-	myTimer -> setFrequency(workFrequency);
-	myTimer -> start();
+	initTimer();
 }
 
 void loop()
@@ -105,6 +104,14 @@ void initSerial()
 			break;
 		}
 	}
+}
+
+void initTimer()
+{
+	myTimer = new DueTimer(Timer.getAvailable());
+	myTimer->attachInterrupt(doTimer);
+	myTimer->setFrequency(workFrequency);
+	myTimer->start();
 }
 
 void ledBlink()
