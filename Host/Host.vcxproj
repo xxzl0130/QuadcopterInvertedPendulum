@@ -69,22 +69,22 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>C:\ProgramData\MinGW64\include\boost;C:\ProgramData\ffmpeg\include;C:\Users\轩轩\Documents\代码\serial\include;$(INCLUDE);$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <IncludePath>C:\Users\轩轩\Documents\Visual Studio 2015\Projects\QuadcopterInvertedPendulum;C:\ProgramData\MinGW64\include\boost;C:\ProgramData\ffmpeg\include;C:\Users\轩轩\Documents\代码\serial\include;$(INCLUDE);$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
     <LibraryPath>C:\ProgramData\ffmpeg\lib;C:\ProgramData\MinGW64\include\boost\libs;C:\ProgramData\MinGW64\include\boost\stage\lib\x86;C:\Users\轩轩\Documents\代码\serial\visual_studio\Debug;$(LIB_X86);$(LibraryPath)</LibraryPath>
     <ExecutablePath>C:\Program Files\opencv\build\x86\vc12;$(VC_ExecutablePath_x86);$(WindowsSDK_ExecutablePath);$(VS_ExecutablePath);$(MSBuild_ExecutablePath);$(SystemRoot)\SysWow64;$(FxCopDir);$(PATH);</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>C:\ProgramData\MinGW64\include\boost;C:\ProgramData\ffmpeg\include;C:\Users\轩轩\Documents\代码\serial\include;$(INCLUDE);$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <IncludePath>C:\Users\轩轩\Documents\Visual Studio 2015\Projects\QuadcopterInvertedPendulum;C:\ProgramData\MinGW64\include\boost;C:\ProgramData\ffmpeg\include;C:\Users\轩轩\Documents\代码\serial\include;$(INCLUDE);$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
     <LibraryPath>C:\ProgramData\ffmpeg\lib;C:\ProgramData\MinGW64\include\boost\libs;C:\ProgramData\MinGW64\include\boost\stage\lib\x86;C:\Users\轩轩\Documents\代码\serial\visual_studio\Release;$(LIB_X86);$(LibraryPath)</LibraryPath>
     <ExecutablePath>C:\Program Files\opencv\build\x86\vc12;$(VC_ExecutablePath_x86);$(WindowsSDK_ExecutablePath);$(VS_ExecutablePath);$(MSBuild_ExecutablePath);$(SystemRoot)\SysWow64;$(FxCopDir);$(PATH);</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>C:\ProgramData\MinGW64\include\boost;C:\ProgramData\ffmpeg\include;C:\Users\轩轩\Documents\代码\serial\include;$(INCLUDE);$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <IncludePath>C:\Users\轩轩\Documents\Visual Studio 2015\Projects\QuadcopterInvertedPendulum;C:\ProgramData\MinGW64\include\boost;C:\ProgramData\ffmpeg\include;C:\Users\轩轩\Documents\代码\serial\include;$(INCLUDE);$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
     <LibraryPath>C:\ProgramData\ffmpeg\lib;C:\ProgramData\MinGW64\include\boost\libs;C:\ProgramData\MinGW64\include\boost\stage\lib\x64;C:\Users\轩轩\Documents\代码\serial\visual_studio\x64\Debug;$(LIB_X64);$(LibraryPath)</LibraryPath>
     <ExecutablePath>C:\Program Files\opencv\build\x64\vc12;$(VC_ExecutablePath_x64);$(WindowsSDK_ExecutablePath);$(VS_ExecutablePath);$(MSBuild_ExecutablePath);$(FxCopDir);$(PATH);</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>C:\ProgramData\MinGW64\include\boost;C:\ProgramData\ffmpeg\include;C:\Users\轩轩\Documents\代码\serial\include;$(INCLUDE);$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <IncludePath>C:\Users\轩轩\Documents\Visual Studio 2015\Projects\QuadcopterInvertedPendulum;C:\ProgramData\MinGW64\include\boost;C:\ProgramData\ffmpeg\include;C:\Users\轩轩\Documents\代码\serial\include;$(INCLUDE);$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
     <LibraryPath>C:\ProgramData\ffmpeg\lib;C:\ProgramData\MinGW64\include\boost\libs;C:\ProgramData\MinGW64\include\boost\stage\lib\x64;C:\Users\轩轩\Documents\代码\serial\visual_studio\x64\Release;$(LIB_X64);$(LibraryPath)</LibraryPath>
     <ExecutablePath>C:\Program Files\opencv\build\x64\vc12;$(VC_ExecutablePath_x64);$(WindowsSDK_ExecutablePath);$(VS_ExecutablePath);$(MSBuild_ExecutablePath);$(FxCopDir);$(PATH);</ExecutablePath>
   </PropertyGroup>
@@ -148,7 +148,7 @@
     <ClCompile Include="MySerial.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\CommonDef.h" />
+    <ClInclude Include="..\Slave\CommonDef.h" />
     <ClInclude Include="DataFrame.h" />
     <ClInclude Include="HostDef.h" />
     <ClInclude Include="msglink.hpp" />

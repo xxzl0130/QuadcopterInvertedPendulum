@@ -39,16 +39,21 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IncludePath>C:\Users\轩轩\Documents\Visual Studio 2015\Projects\QuadcopterInvertedPendulum;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IncludePath>C:\Users\轩轩\Documents\Visual Studio 2015\Projects\QuadcopterInvertedPendulum;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>C:\Arduino\hardware\arduino\sam\cores\arduino;C:\Arduino\hardware\arduino\sam\variants\arduino_due_x;C:\Users\轩轩\Documents\Visual Studio 2015\Projects\QuadcopterInvertedPendulum\Slave;C:\Users\轩轩\Documents\Arduino\libraries\PID;C:\Users\轩轩\Documents\Arduino\libraries\PID\utility;C:\Arduino\libraries;C:\Arduino\hardware\arduino\sam\libraries;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\Extensions\xb0tmwr1.g5c\Micro Platforms\default\debuggers;C:\Users\轩轩\Documents\Arduino\libraries;C:\Arduino\hardware\arduino\sam\system/libsam;C:\Arduino\hardware\arduino\sam\system/CMSIS/CMSIS/Include/;C:\Arduino\hardware\arduino\sam\system/CMSIS/Device/ATMEL/;C:\Arduino\hardware\arduino\sam/system/CMSIS/Device/ATMEL/sam3xa/include/pio;C:\Arduino\hardware\arduino\sam/system/libsam/include;C:\Arduino\hardware\arduino\sam/CMSIS/CMSIS/Include/;C:\Arduino\hardware\arduino\sam/system/CMSIS/Device/ATMEL/sam3xa/include;C:\Arduino\hardware\arduino\sam\system/libsam;C:\Arduino\hardware\arduino\sam\system/CMSIS/Device/ATMEL;C:\Arduino\hardware\arduino\sam\system\CMSIS\Device\ATMEL\;C:\Arduino\hardware\arduino\sam\system\libsam;C:\Arduino\hardware\arduino\sam\system\libsam\include;C:\Arduino\hardware\arduino\sam\system\CMSIS\CMSIS\Include\;C:\Arduino\hardware\arduino\sam\system\CMSIS\CMSIS\Include\;C:\Arduino\hardware\arduino\sam\system\CMSIS\Device\ATMEL\;C:\Arduino\hardware\arduino\sam\system\libsam;C:\Arduino\hardware\arduino\sam\system\libsam\include;C:\Arduino/hardware/tools/g++_arm_none_eabi\arm-none-eabi\include;C:\Arduino/hardware/tools/g++_arm_none_eabi\arm_none_eabi\include\;C:\Arduino/hardware/tools/g++_arm_none_eabi\lib\gcc\arm-none-eabi\4.4.1\include;C:\Arduino/hardware/tools/g++_arm_none_eabi\lib\gcc\arm-none-eabi\4.4.1\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Arduino\hardware\arduino\sam\cores\arduino;C:\Arduino\hardware\arduino\sam\variants\arduino_due_x;C:\Users\轩轩\Documents\Visual Studio 2015\Projects\QuadcopterInvertedPendulum\Slave;C:\Arduino\libraries;C:\Arduino\hardware\arduino\sam\libraries;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\Extensions\xb0tmwr1.g5c\Micro Platforms\default\debuggers;C:\Users\轩轩\Documents\Arduino\libraries;C:\Arduino\hardware\arduino\sam\system/libsam;C:\Arduino\hardware\arduino\sam\system/CMSIS/CMSIS/Include/;C:\Arduino\hardware\arduino\sam\system/CMSIS/Device/ATMEL/;C:\Arduino\hardware\arduino\sam\cores\arduino;C:\Arduino\hardware\arduino\sam\variants\arduino_due_x;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\Extensions\xb0tmwr1.g5c\Micro Platforms\default\debuggers\VM_DBG;C:\Arduino\libraries;C:\Arduino\hardware\arduino\sam\libraries;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\Extensions\xb0tmwr1.g5c\Micro Platforms\default\debuggers;C:\Users\轩轩\Documents\Arduino\libraries;C:\Arduino\hardware\arduino\sam/system/CMSIS/Device/ATMEL/sam3xa/include/pio;C:\Arduino\hardware\arduino\sam/system/libsam/include;C:\Arduino\hardware\arduino\sam/CMSIS/CMSIS/Include/;C:\Arduino\hardware\arduino\sam/system/CMSIS/Device/ATMEL/sam3xa/include;C:\Arduino\hardware\arduino\sam\system/libsam;C:\Arduino\hardware\arduino\sam\system/CMSIS/Device/ATMEL;C:\Arduino\hardware\arduino\sam\system\CMSIS\Device\ATMEL\;C:\Arduino\hardware\arduino\sam\system\libsam;C:\Arduino\hardware\arduino\sam\system\libsam\include;C:\Arduino\hardware\arduino\sam\system\CMSIS\CMSIS\Include\;C:\Arduino\hardware\arduino\sam\system\CMSIS\CMSIS\Include\;C:\Arduino\hardware\arduino\sam\system\CMSIS\Device\ATMEL\;C:\Arduino\hardware\arduino\sam\system\libsam;C:\Arduino\hardware\arduino\sam\system\libsam\include;C:\Arduino/hardware/tools/g++_arm_none_eabi\arm-none-eabi\include;C:\Arduino/hardware/tools/g++_arm_none_eabi\arm_none_eabi\include\;C:\Arduino/hardware/tools/g++_arm_none_eabi\lib\gcc\arm-none-eabi\4.4.1\include;C:\Arduino/hardware/tools/g++_arm_none_eabi\lib\gcc\arm-none-eabi\4.4.1\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>C:\Users\轩轩\Documents\Visual Studio 2015\Projects\QuadcopterInvertedPendulum\Slave\__vm\.Slave.vsarduino.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
       <IgnoreStandardIncludePath>false</IgnoreStandardIncludePath>
-      <PreprocessorDefinitions>printf=iprintf;F_CPU=84000000L;ARDUINO=158;ARDUINO_SAM_DUE;ARDUINO_ARCH_SAM;__SAM3X8E__;USB_VID=0x2341;USB_PID=0x003e;USBCON;__cplusplus=201103L;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_VMDEBUG=1;printf=iprintf;F_CPU=84000000L;ARDUINO=158;ARDUINO_SAM_DUE;ARDUINO_ARCH_SAM;__SAM3X8E__;USB_VID=0x2341;USB_PID=0x003e;USBCON;__cplusplus=201103L;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -78,9 +83,14 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\CommonDef.h" />
+    <ClInclude Include="CommonDef.h" />
+    <ClInclude Include="DataFrame.h" />
+    <ClInclude Include="PID.h" />
     <ClInclude Include="SlaveDef.h" />
     <ClInclude Include="__vm\.Slave.vsarduino.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="DataFrame.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

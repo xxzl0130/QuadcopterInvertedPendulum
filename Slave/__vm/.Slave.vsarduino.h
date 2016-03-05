@@ -10,6 +10,7 @@
 
 #ifndef _VSARDUINO_H_
 #define _VSARDUINO_H_
+#define _VMDEBUG 1
 #define printf iprintf
 #define F_CPU 84000000L
 #define ARDUINO 158
@@ -107,6 +108,9 @@ typedef long caddr_t;
 #define portInputRegister(P)
 #define portModeRegister(P)
 #include <..\Slave\Slave.ino>
-#include <..\..\QuadcopterInvertedPendulum\CommonDef.h>
+#include <..\Slave\CommonDef.h>
+#include <..\Slave\DataFrame.cpp>
+#include <..\Slave\DataFrame.h>
+#include <..\Slave\PID.h>
 #include <..\Slave\SlaveDef.h>
 #endif

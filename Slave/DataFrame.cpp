@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include "DataFrame.h"
 #include <stdint.h>
 #include <string.h>

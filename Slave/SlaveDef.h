@@ -14,4 +14,10 @@
 // 编码器接口B
 #define CodePinB	23
 
+// 缓冲区最大大小(256B)
+#define MAX_BUF_SIZE (256)
+
+// 控制频率(Hz)
+#define workFrequency 100
+
 #endif //__SLAVE_DEF_H__

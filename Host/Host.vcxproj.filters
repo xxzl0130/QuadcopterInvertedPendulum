@@ -18,17 +18,14 @@
     <ClCompile Include="host.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="DataFrame.cpp">
+    <ClCompile Include="MySerial.cpp">
       <Filter>头文件</Filter>
     </ClCompile>
-    <ClCompile Include="MySerial.cpp">
+    <ClCompile Include="DataFrame.cpp">
       <Filter>头文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\CommonDef.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="HostDef.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -38,10 +35,13 @@
     <ClInclude Include="Queue.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="DataFrame.h">
+    <ClInclude Include="MySerial.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="MySerial.h">
+    <ClInclude Include="..\Slave\CommonDef.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DataFrame.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

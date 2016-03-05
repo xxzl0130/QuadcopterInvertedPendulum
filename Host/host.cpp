@@ -18,7 +18,7 @@
 
 // 自定义头文件
 #include "serial/serial.h"
-#include "../CommonDef.h"
+#include "../Slave/CommonDef.h"
 #include "HostDef.h"
 #include "msglink.hpp"
 #include "Queue.h"
@@ -79,7 +79,7 @@ void initSerialArg(int argc, char** argv)
 	else if (argc == 2)
 	{// 命令行参数只提供了串口，波特率默认
 		port = string(argv[1]);
-		baud = baudRate;
+		baud = gengeralBaudRate;
 	}
 	else if (argc >= 3)
 	{// 命令行参数提供了串口和波特率
@@ -344,12 +344,12 @@ outLoop:
 void sendInfo2Slave(float x, float y, float z)
 {
 	int16_t data[3];
-	uint8_t frame[20];
 	data[0] = static_cast<int16_t>(x * 10.0 + 0.5);
 	data[1] = static_cast<int16_t>(y * 10.0 + 0.5);
 	data[2] = static_cast<int16_t>(z * 10.0 + 0.5);
-	auto size = makeDataFrame(data, frame, 3 * sizeof(int16_t));
 #if SlaveConnected
+	uint8_t frame[20];
+	auto size = makeDataFrame(data, frame, 3 * sizeof(int16_t));
 	slave.write(frame,size);
 #endif
 	printf("(%.1f, %.1f, %.1f)\r", x, y, z);
