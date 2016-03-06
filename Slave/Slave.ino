@@ -1,11 +1,12 @@
-#ifndef __arm__
-#define __arm__
-#endif
 #include "CommonDef.h"
 #include "PID.h"
 #include "SlaveDef.h"
 #include "DataFrame.h"
+#ifdef __arm__
 #include "DueTimer/DueTimer.h"
+#else
+#include "MsTimer2/MsTimer2.h"
+#endif
 
 // 缓冲区
 uint8_t buf[MAX_BUF_SIZE];
@@ -15,8 +16,10 @@ float r1, r2, kw = 18;
 PID pid1(kp, ki, kd), pid2(kp, ki, kd);
 // 控制工作标志
 bool workFlag = 0;
+#ifdef __arm__
 // 计时器
 DueTimer *myTimer;
+#endif
 // 由旋转编码器计算的摆的位置
 int stickPos;
 // 右起 1位为A 0位为B
@@ -34,11 +37,20 @@ void codeA();
 void codeB();
 // 定时器回调函数
 void doTimer();
+// led闪烁
+void ledBlink();
+// 串口事件函数
+#ifdef DEBUG
+void serialEvent();
+#else
+void serialEvent1();
+#endif
 
 void setup()
 {
-	initSerial();
 	initPin();
+	ledBlink();
+	initSerial();
 	initTimer();
 }
 
@@ -52,29 +64,41 @@ void loop()
 	r2 = pid2.update(stickPos, stickPos);
 }
 
+#ifdef DEBUG
+void serialEvent()
+#else
 void serialEvent1()
+#endif
 {
 	static uint8_t count = 0;
-	while(Serial1.available())
+	while(comSer.available())
 	{
-		buf[count] = Serial1.read();
+		buf[count] = comSer.read();
 		if (buf[count] == static_cast<uint8_t>(0xa5) &&
-			(buf[++count] = Serial1.read()) == static_cast<uint8_t>(0x5a))
+			(buf[++count] = comSer.read()) == static_cast<uint8_t>(0x5a))
 		{
 			count = 0;
 			buf[count++] = 0xa5;
 			buf[count++] = 0x5a;
-			buf[count++] = Serial1.read();
+			buf[count++] = comSer.read();
 			for (int i = 0; i <= buf[2];++i)
 			{
-				buf[count++] = Serial1.read();
+				buf[count++] = comSer.read();
 			}
-			buf[count++] = Serial1.read();
+			buf[count++] = comSer.read();
 			if(checkDataFrame(buf))
 			{
 				decodeDataFrame(posFromHost, buf);
 				workFlag = true;
 			}
+#ifdef  DEBUG
+			for (int i = 0; i < 4; ++i)
+			{
+				comSer.print(posFromHost[0]);
+				comSer.print(" ");
+			}
+			comSer.print("\n");
+#endif
 			return;
 		}
 	}
@@ -83,6 +107,7 @@ void serialEvent1()
 void initPin()
 {
 	pinMode(led, OUTPUT);
+	digitalWrite(led, LOW);
 	pinMode(CodePinA, INPUT_PULLUP);
 	pinMode(CodePinB, INPUT_PULLUP);
 	attachInterrupt(CodePinA, codeA, CHANGE);
@@ -91,16 +116,15 @@ void initPin()
 
 void initSerial()
 {
-	Serial2.begin(gengeralBaudRate);
-	Serial1.begin(gengeralBaudRate);
-	while (!Serial1.available());
-	for (int i = 0; i < 3;++i)
+	comSer.begin(gengeralBaudRate);
+	while (!comSer.available());
+	for (int i = 0; i < 3; ++i)
 	{
-		String tmp = Serial1.readString();
-		if(strstr(tmp.c_str(), testComHost) != NULL)
+		String tmp = comSer.readStringUntil('\n');
+		if (strstr(tmp.c_str(), testComHost) != NULL)
 		{
 			// 找到握手字符串
-			Serial1.println(testComSlave);
+			comSer.println(testComSlave);
 			break;
 		}
 	}
@@ -108,10 +132,15 @@ void initSerial()
 
 void initTimer()
 {
+#ifdef __arm__
 	myTimer = new DueTimer(Timer.getAvailable());
 	myTimer->attachInterrupt(doTimer);
 	myTimer->setFrequency(workFrequency);
 	myTimer->start();
+#else
+	MsTimer2::set(1000L / workFrequency, doTimer);
+	MsTimer2::start();
+#endif
 }
 
 void ledBlink()

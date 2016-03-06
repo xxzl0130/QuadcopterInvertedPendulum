@@ -3,6 +3,8 @@
 
 #include <Arduino.h>
 
+#define DEBUG
+
 #define kp 20.0
 #define ki 0.0001
 #define kd 0.0
@@ -19,5 +21,11 @@
 
 // ¿ØÖÆÆµÂÊ(Hz)
 #define workFrequency 100
+
+#ifdef DEBUG
+#define comSer Serial
+#else
+#define comSer Serial1
+#endif
 
 #endif //__SLAVE_DEF_H__

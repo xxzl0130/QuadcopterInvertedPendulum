@@ -55,7 +55,7 @@ void initSerialArg(int argc, char** argv);
 并向从机发送初始化信息以确认连接。
 初始化错误将终止整个程序。
 */
-void initSerial(string port, uint baud = baudRate);
+void initSerial(string port, uint baud = gengeralBaudRate);
 /*
 通过main函数参数初始化串口。
 argv[3]存在则为摄像头ID，不存在则默认打开0。
@@ -84,7 +84,7 @@ void processImage(MsgLink<DispMsg>* ld);
 /*
 向从机发送位置信息。
 */
-void sendInfo2Slave(float x, float y, float z);
+void sendInfo2Slave(float x, float y, float z, float frame);
 // 鼠标事件回调函数
 void onMouse(int event, int x, int y, int, void*);
 /*

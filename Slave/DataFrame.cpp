@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 
-size_t makeDataFrame(const void* data, uint8_t* frame, size_t count)
+uint8_t makeDataFrame(const void* data, uint8_t* frame, uint8_t count)
 {
 	const uint8_t* scr = static_cast<const uint8_t*>(data);
 	uint8_t* dst = static_cast<uint8_t*>(frame);
@@ -49,20 +49,19 @@ bool checkDataFrame(const uint8_t* frame)
 	return true;
 }
 
-template <typename DataType>
-size_t decodeDataFrame(DataType* data, const uint8_t* frame)
+uint8_t decodeDataFrame(float* data, const uint8_t* frame)
 {
 	size_t count;
 	const uint8_t *frameData = static_cast<const uint8_t*>(frame), *ptr = frameData + 3;
-	count = (frameData[2] - 1) / sizeof(DataType);
-	for (int i = 0u; i < count; ++i, ptr += sizeof(DataType))
+	count = (frameData[2] - 1) / sizeof(float);
+	for (int i = 0u; i < count; ++i, ptr += sizeof(float))
 	{
-		data[i] = *reinterpret_cast<DataType*>(ptr);
+		data[i] = *reinterpret_cast<const float*>(ptr);
 	}
 	return count;
 }
 
-uint8_t* findDataFrame(uint8_t* data, size_t size)
+uint8_t* findDataFrame(uint8_t* data, uint8_t size)
 {
 	for (int i = 0; i < size;++i)
 	{

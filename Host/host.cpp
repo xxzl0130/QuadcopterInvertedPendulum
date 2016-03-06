@@ -43,6 +43,7 @@ Point origin;//用于保存鼠标选择第一次单击时点的位置
 Rect selection, trackWindow;//用于保存鼠标选择的矩形框
 int vmin = 10, vmax = 256, smin = 30;
 MsgLink<DispMsg> linkd;
+uint16_t frameCount;
 
 int main(int argc, char** argv)
 {
@@ -310,7 +311,7 @@ void processImage(MsgLink<DispMsg>* ld)
 
 			imshow(videoWindowName, image);
 			imshow(histWindowName, histimg);
-			sendInfo2Slave(pts[4].x - VIDEO_WIDTH / 2, pts[4].y - VIDEO_HEIGHT / 2, 0);
+			sendInfo2Slave(pts[4].x - VIDEO_WIDTH / 2, pts[4].y - VIDEO_HEIGHT / 2, 0, frameCount++);
 		}
 		switch(waitKey(10))
 		{
@@ -341,15 +342,16 @@ outLoop:
 	ld->close();
 }
 
-void sendInfo2Slave(float x, float y, float z)
+void sendInfo2Slave(float x, float y, float z, float frame)
 {
-	int16_t data[3];
+	int16_t data[4];
 	data[0] = static_cast<int16_t>(x * 10.0 + 0.5);
 	data[1] = static_cast<int16_t>(y * 10.0 + 0.5);
 	data[2] = static_cast<int16_t>(z * 10.0 + 0.5);
+	data[3] = static_cast<int16_t>(frame + 0.5);
 #if SlaveConnected
 	uint8_t frame[20];
-	auto size = makeDataFrame(data, frame, 3 * sizeof(int16_t));
+	auto size = makeDataFrame(data, frame, 4 * sizeof(int16_t));
 	slave.write(frame,size);
 #endif
 	printf("(%.1f, %.1f, %.1f)\r", x, y, z);
