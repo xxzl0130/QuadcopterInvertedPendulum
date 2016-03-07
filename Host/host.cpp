@@ -43,7 +43,6 @@ Point origin;//用于保存鼠标选择第一次单击时点的位置
 Rect selection, trackWindow;//用于保存鼠标选择的矩形框
 int vmin = 10, vmax = 256, smin = 30;
 MsgLink<DispMsg> linkd;
-uint16_t frameCount;
 
 int main(int argc, char** argv)
 {
@@ -220,7 +219,11 @@ void processImage(MsgLink<DispMsg>* ld)
 	const float* phranges = hranges;
 	CircleQueue_Avg<Point2f> pointQue(4);
 	CircleQueue_Avg<double> timeQue(15);
-	Point2f pts[6];
+	Point2f pts[6],centerPoint;
+	// 统计帧数
+	uint16_t frameCount = 0;
+	// 中心颜色
+	Vec3b centerColor;
 	double time[2] = {0,0};
 	int k = 0;
 	char tmp[10];
@@ -232,6 +235,7 @@ void processImage(MsgLink<DispMsg>* ld)
 		{
 			time[k ^= 1] = static_cast<double>(clock()) / CLOCKS_PER_SEC;
 			timeQue.push(time[k] - time[k ^ 1]);
+			auto last = pointQue.back();
 			md->image.copyTo(image);
 			cvtColor(image, hsv, CV_BGR2HSV);//将rgb摄像头帧转化成hsv空间的
 			if (trackObject)//trackObject初始化为0,或者按完键盘的'c'键后也为0，当鼠标单击松开后为-1
@@ -252,6 +256,13 @@ void processImage(MsgLink<DispMsg>* ld)
 					//此处的构造函数roi用的是Mat hue的矩阵头，且roi的数据指针指向hue，即共用相同的数据，select为其感兴趣的区域
 					Mat roi(hue, selection), maskroi(mask, selection);//mask保存的hsv的最小值
 
+					if(centerColor == Vec3b(0, 0, 0))
+					{
+						// 该选框选中后第一次检测时保存中心颜色
+						centerColor = image.at<Vec3b>(static_cast<int>(selection.x + selection.width / 2 + 0.5),
+							static_cast<int>(selection.y + selection.height / 2 + 0.5));
+					}
+					
 					//calcHist()函数第一个参数为输入矩阵序列，第2个参数表示输入的矩阵数目，第3个参数表示将被计算直方图维数通道的列表，第4个参数表示可选的掩码函数
 					//第5个参数表示输出直方图，第6个参数表示直方图的维数，第7个参数为每一维直方图数组的大小，第8个参数为每一维直方图bin的边界
 					calcHist(&roi, 1, nullptr, maskroi, hist, 1, &hsize, &phranges);//将roi的0通道计算直方图并通过mask放入hist中，hsize为每一维直方图的大小
@@ -301,6 +312,10 @@ void processImage(MsgLink<DispMsg>* ld)
 				}
 				circle(image, pts[4], static_cast<int>(norm(pts[4] - ((pts[0] + pts[3]) / 2))), Scalar(0, 255, 0), 3, 8, 0);
 			}
+			else
+			{
+				centerColor = Vec3b(0, 0, 0);
+			}
 			if (selectObject && selection.width > 0 && selection.height > 0)
 			{
 				Mat roi(image, selection);
@@ -313,7 +328,18 @@ void processImage(MsgLink<DispMsg>* ld)
 
 			imshow(videoWindowName, image);
 			imshow(histWindowName, histimg);
-			sendInfo2Slave(pts[4].x - VIDEO_WIDTH / 2, pts[4].y - VIDEO_HEIGHT / 2, 0, frameCount++);
+			if(isSameColor(centerColor, image.at<Vec3b>(Point_<int>(pts[4]))))
+			{
+				centerPoint = Point2f(pts[4].x - VIDEO_WIDTH / 2, VIDEO_HEIGHT / 2 - pts[4].y);
+			}
+			else
+			{
+				// 不是同一颜色，说明已出界
+				// 给一个出界的值
+				centerPoint = Point2f(VIDEO_WIDTH * 1.1, VIDEO_HEIGHT * 1.1);
+			}
+			sendInfo2Slave(centerPoint.x, centerPoint.y, 0, frameCount++);
+			cout << (pts[4] - last) << "           \r";
 		}
 		switch(waitKey(10))
 		{
@@ -347,6 +373,10 @@ outLoop:
 void sendInfo2Slave(float x, float y, float z, float frame)
 {
 	int16_t data[4];
+	// 转换为角度
+	x = (x / (VIDEO_HEIGHT / 2) * 180.0);
+	y = (y / (VIDEO_HEIGHT / 2) * 180.0);
+	// 转换为int16
 	data[0] = static_cast<int16_t>(x * 10.0 + 0.5);
 	data[1] = static_cast<int16_t>(y * 10.0 + 0.5);
 	data[2] = static_cast<int16_t>(z * 10.0 + 0.5);
@@ -356,7 +386,7 @@ void sendInfo2Slave(float x, float y, float z, float frame)
 	auto size = makeDataFrame(data, frame, 4 * sizeof(int16_t));
 	slave.write(frame,size);
 #endif
-	printf("(%.1f, %.1f, %.1f)\r", x, y, z);
+	printf("(%.1f, %.1f, %.1f) %.0f  ", x, y, z, frame);
 }
 
 void onMouse(int event, int x, int y, int, void*)
@@ -394,5 +424,18 @@ void circleWork()
 		linkd.send();
 		if (linkd.isClosed())
 			break;
+	}
+}
+
+bool isSameColor(Vec3b a, Vec3b b)
+{
+	auto diff = a - b;
+	if(sqrt(norm(diff)) > 32.0)
+	{
+		return false;
+	}
+	else
+	{
+		return true;
 	}
 }

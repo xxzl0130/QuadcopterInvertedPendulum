@@ -2,6 +2,8 @@
 
 #include "msglink.hpp"
 #include <string>
+// OpenCV头文件
+#include <opencv2/highgui/highgui.hpp>
 using std::string;
 
 // 缓冲区最大大小(4KB)
@@ -91,3 +93,5 @@ void onMouse(int event, int x, int y, int, void*);
 循环工作，读取图像并发送给processImage
 */
 void circleWork();
+// 判断两个颜色是否为相同颜色
+bool isSameColor(cv::Vec3b a, cv::Vec3b b);
