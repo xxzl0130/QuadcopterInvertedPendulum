@@ -1,6 +1,8 @@
 #pragma once
 
 #include <stdint.h>
+#include <vector>
+using namespace std;
 
 /*
 构造一帧数据，参数data为数据，frame为数据帧,count为数据字节数。

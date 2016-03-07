@@ -1,8 +1,3 @@
-/*
-Todo:
-DataFrame库修改为Vector兼容的
-*/
-
 // 基础头文件
 #include <string>
 #include <iostream>
@@ -234,6 +229,8 @@ void processImage(MsgLink<DispMsg>* ld)
 	double time[2] = {0,0};
 	int k = 0;
 	char tmp[10];
+	// 需要发送的数据
+	float data2Send[10];
 
 	initWindow();
 	while (true)
@@ -249,8 +246,6 @@ void processImage(MsgLink<DispMsg>* ld)
 			if (trackObject)//trackObject初始化为0,或者按完键盘的'c'键后也为0，当鼠标单击松开后为-1
 			{
 				int _vmin = vmin, _vmax = vmax;
-				//需要发送的数据
-				vector<float> data2Send;
 
 				//inRange函数的功能是检查输入数组每个元素大小是否在2个给定数值之间，可以有多通道,mask保存0通道的最小值，也就是h分量
 				//这里利用了hsv的3个通道，比较h,0~180,s,smin~256,v,min(vmin,vmax),max(vmin,vmax)。如果3个通道都在对应的范围内，则
@@ -334,9 +329,9 @@ void processImage(MsgLink<DispMsg>* ld)
 				{
 					centerPoint = Point2f(pts[4].x - VIDEO_WIDTH / 2, VIDEO_HEIGHT / 2 - pts[4].y);
 				}
-				data2Send.push_back(centerPoint.x);
-				data2Send.push_back(centerPoint.y);
-				sendInfo2Slave(data2Send);
+				data2Send[0] = centerPoint.x;
+				data2Send[1] = centerPoint.y;
+				sendInfo2Slave(data2Send,2);
 			}
 			else
 			{
@@ -389,25 +384,26 @@ outLoop:
 	ld->close();
 }
 
-void sendInfo2Slave(vector<float> &data)
+void sendInfo2Slave(float *data, size_t cnt)
 {
-	vector<uint16_t> dataTmp1;
-	vector<uint8_t> dataTmp2;
+	uint16_t *dataTmp1 = new uint16_t[cnt];
+	uint8_t *frame = new uint8_t[cnt * 2 + 10];
 	// 第一个数据为x坐标 转换为角度 放大100倍
-	dataTmp1.push_back(static_cast<uint16_t>(data[0] / (VIDEO_HEIGHT / 2) * (VIDEO_VIEW_ANGLE / 2)) * 100.0 + 0.5);
+	dataTmp1[0] = static_cast<uint16_t>(data[0] / (VIDEO_HEIGHT / 2) * (VIDEO_VIEW_ANGLE / 2)) * 100.0 + 0.5;
 	// 第二个数据为y坐标 转换为角度 放大100倍
-	dataTmp1.push_back(static_cast<uint16_t>(data[1] / (VIDEO_HEIGHT / 2) * (VIDEO_VIEW_ANGLE / 2)) * 100.0 + 0.5);
+	dataTmp1[1] = static_cast<uint16_t>(data[1] / (VIDEO_HEIGHT / 2) * (VIDEO_VIEW_ANGLE / 2)) * 100.0 + 0.5;
 	// 将其余转换为int16_t 放大100倍
-	for (int i = 2; i < data.size();++i)
+	for (auto i = 2; i < cnt;++i)
 	{
-		dataTmp1.push_back(static_cast<uint16_t>(data[i] * 100.0 + 0.5));
+		dataTmp1[i] = static_cast<uint16_t>(data[i] * 100.0 + 0.5);
 	}
 #if SlaveConnected
-	uint8_t frame[20];
 	auto size = makeDataFrame(data, frame, 4 * sizeof(int16_t));
 	slave.write(frame,size);
 #endif
 	printf("(%.1f, %.1f)", data[0], data[1]);
+	delete dataTmp1;
+	delete frame;
 }
 
 void onMouse(int event, int x, int y, int, void*)

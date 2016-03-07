@@ -90,7 +90,7 @@ void processImage(MsgLink<DispMsg>* ld);
 /*
 向从机发送位置信息。
 */
-void sendInfo2Slave(std::vector<float> &data);
+void sendInfo2Slave(float *data,size_t cnt);
 // 鼠标事件回调函数
 void onMouse(int event, int x, int y, int, void*);
 /*
