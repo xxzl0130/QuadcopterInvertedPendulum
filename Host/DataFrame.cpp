@@ -19,7 +19,7 @@ size_t makeDataFrame(const void* data, uint8_t* frame, size_t count)
 	memcpy(dst + 4, scr, count);
 	// 校验
 	dst[count + 4] = 0;
-	for (int i = 0u; i <= count + 1;++i)
+	for (auto i = 0u; i <= count + 1;++i)
 		dst[count + 4] += dst[i + 2];
 	// 结束标记
 	dst[count + 5] = 0xaa;
@@ -63,7 +63,7 @@ size_t decodeDataFrame(DataType* data, const uint8_t* frame)
 
 uint8_t* findDataFrame(uint8_t* data, size_t size)
 {
-	for (int i = 0; i < size;++i)
+	for (auto i = 0u; i < size;++i)
 	{
 		if(data[i] == static_cast<uint8_t>(0xa5) && checkDataFrame(data + i))
 		{

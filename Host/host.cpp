@@ -22,8 +22,6 @@
 #include "HostDef.h"
 #include "msglink.hpp"
 #include "Queue.h"
-#include "DataFrame.h"
-#include "MySerial.h"
 
 using namespace std;
 using namespace serial;
@@ -33,14 +31,13 @@ using boost::thread;
 #define SlaveConnected 0
 
 Serial slave;// 从机通信串口
-char buf[MAX_BUF_SIZE];// 缓冲区
 VideoCapture cap;// 摄像头
 bool backprojMode = false; //表示是否要进入反向投影模式，ture表示准备进入反向投影模式
 bool selectObject = false;//代表是否在选要跟踪的初始目标，true表示正在用鼠标选择
 int trackObject = 0; //代表跟踪目标数目
 bool showHist = true;//是否显示直方图
 Point origin;//用于保存鼠标选择第一次单击时点的位置
-Rect selection, trackWindow;//用于保存鼠标选择的矩形框
+Rect selection;//用于保存鼠标选择的矩形框
 int vmin = 10, vmax = 256, smin = 30;
 MsgLink<DispMsg> linkd;
 
@@ -68,7 +65,7 @@ int main(int argc, char** argv)
 void initSerialArg(int argc, char** argv)
 {
 	string port;
-	uint baud;
+	uint baud = gengeralBaudRate;
 	if (argc == 1)
 	{// 命令行未提供参数则由屏幕输入
 		cout << "Port:";
@@ -220,8 +217,6 @@ void processImage(MsgLink<DispMsg>* ld)
 	CircleQueue_Avg<Point2f> pointQue(4);
 	CircleQueue_Avg<double> timeQue(15);
 	Point2f pts[6],centerPoint;
-	// 统计帧数
-	uint16_t frameCount = 0;
 	// 中心颜色
 	Vec3b centerColor;
 	// 出界
@@ -322,7 +317,7 @@ void processImage(MsgLink<DispMsg>* ld)
 					// 不是同一颜色，说明已出界
 					// 给一个出界的值
 					centerPoint = Point2f(VIDEO_WIDTH * 1.1, VIDEO_HEIGHT * 1.1);
-					sprintf_s(tmp, sizeof(tmp), "出界", timeQue.avg() * 1000);
+					sprintf_s(tmp, sizeof(tmp), "出界");
 					putText(image, tmp, Point(0, 60), 2, 1, CV_RGB(255, 255, 0));
 				}
 				else
@@ -386,14 +381,14 @@ outLoop:
 
 void sendInfo2Slave(float *data, size_t cnt)
 {
-	uint16_t *dataTmp1 = new uint16_t[cnt];
-	uint8_t *frame = new uint8_t[cnt * 2 + 10];
+	auto *dataTmp1 = new uint16_t[cnt];
+	auto *frame = new uint8_t[cnt * 2 + 10];
 	// 第一个数据为x坐标 转换为角度 放大100倍
 	dataTmp1[0] = static_cast<uint16_t>(data[0] / (VIDEO_HEIGHT / 2) * (VIDEO_VIEW_ANGLE / 2)) * 100.0 + 0.5;
 	// 第二个数据为y坐标 转换为角度 放大100倍
 	dataTmp1[1] = static_cast<uint16_t>(data[1] / (VIDEO_HEIGHT / 2) * (VIDEO_VIEW_ANGLE / 2)) * 100.0 + 0.5;
 	// 将其余转换为int16_t 放大100倍
-	for (auto i = 2; i < cnt;++i)
+	for (auto i = 2u; i < cnt;++i)
 	{
 		dataTmp1[i] = static_cast<uint16_t>(data[i] * 100.0 + 0.5);
 	}
