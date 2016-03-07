@@ -113,7 +113,9 @@ void initSerial(string port, uint baud)
 		cout << __LINE__ << ":";
 		goto serialErr;
 	}
+	cout << "串口初始化成功。" << endl;
 	return;
+	/*
 	// 向从机发送握手信息
 	slave.write(testComHost);
 	// 检查回收的握手信息
@@ -128,7 +130,7 @@ void initSerial(string port, uint baud)
 	}
 	cerr << __LINE__ << ":";
 	goto serialErr;
-
+	*/
 serialErr:
 	cerr << "无法打开串口:" << slave.getPort();
 	system("pause");

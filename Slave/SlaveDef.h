@@ -12,9 +12,10 @@
 // 板载LED
 #define led 13
 // 编码器接口A
-#define CodePinA	22
+#define CodePinA	2
 // 编码器接口B
-#define CodePinB	23
+#define CodePinB	3
+// 使用2 3pin以兼容Mega/Due
 
 // 缓冲区最大大小(256B)
 #define MAX_BUF_SIZE (256)

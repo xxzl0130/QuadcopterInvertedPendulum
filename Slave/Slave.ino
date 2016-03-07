@@ -110,14 +110,19 @@ void initPin()
 	digitalWrite(led, LOW);
 	pinMode(CodePinA, INPUT_PULLUP);
 	pinMode(CodePinB, INPUT_PULLUP);
+#ifdef __arm__ //Due和Mega有不同的中断函数
 	attachInterrupt(CodePinA, codeA, CHANGE);
 	attachInterrupt(CodePinB, codeB, CHANGE);
+#else
+	attachInterrupt(0, codeA, CHANGE);
+	attachInterrupt(1, codeB, CHANGE);
+#endif
 }
 
 void initSerial()
 {
 	comSer.begin(gengeralBaudRate);
-	while (!comSer.available());
+	/*while (!comSer.available());
 	for (int i = 0; i < 3; ++i)
 	{
 		String tmp = comSer.readStringUntil('\n');
@@ -127,7 +132,7 @@ void initSerial()
 			comSer.println(testComSlave);
 			break;
 		}
-	}
+	}*/
 }
 
 void initTimer()
