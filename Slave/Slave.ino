@@ -101,6 +101,10 @@ void serialEvent1()
 #endif
 			return;
 		}
+		else
+		{
+			++count;
+		}
 	}
 }
 

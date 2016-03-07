@@ -1,3 +1,8 @@
+/*
+Todo:
+DataFrame库修改为Vector兼容的
+*/
+
 // 基础头文件
 #include <string>
 #include <iostream>
@@ -32,7 +37,7 @@ using boost::thread;
 
 #define SlaveConnected 0
 
-MySerial slave;// 从机通信串口
+Serial slave;// 从机通信串口
 char buf[MAX_BUF_SIZE];// 缓冲区
 VideoCapture cap;// 摄像头
 bool backprojMode = false; //表示是否要进入反向投影模式，ture表示准备进入反向投影模式
@@ -224,9 +229,12 @@ void processImage(MsgLink<DispMsg>* ld)
 	uint16_t frameCount = 0;
 	// 中心颜色
 	Vec3b centerColor;
+	// 出界
+	bool out = false;
 	double time[2] = {0,0};
 	int k = 0;
 	char tmp[10];
+
 	initWindow();
 	while (true)
 	{
@@ -241,6 +249,8 @@ void processImage(MsgLink<DispMsg>* ld)
 			if (trackObject)//trackObject初始化为0,或者按完键盘的'c'键后也为0，当鼠标单击松开后为-1
 			{
 				int _vmin = vmin, _vmax = vmax;
+				//需要发送的数据
+				vector<float> data2Send;
 
 				//inRange函数的功能是检查输入数组每个元素大小是否在2个给定数值之间，可以有多通道,mask保存0通道的最小值，也就是h分量
 				//这里利用了hsv的3个通道，比较h,0~180,s,smin~256,v,min(vmin,vmax),max(vmin,vmax)。如果3个通道都在对应的范围内，则
@@ -311,6 +321,22 @@ void processImage(MsgLink<DispMsg>* ld)
 					circle(image, pts[i], 1, Scalar(255, 0, 0), 3, 8, 0);
 				}
 				circle(image, pts[4], static_cast<int>(norm(pts[4] - ((pts[0] + pts[3]) / 2))), Scalar(0, 255, 0), 3, 8, 0);
+				
+				if (!isSameColor(centerColor, image.at<Vec3b>(Point_<int>(pts[4]))) || out)
+				{
+					// 不是同一颜色，说明已出界
+					// 给一个出界的值
+					centerPoint = Point2f(VIDEO_WIDTH * 1.1, VIDEO_HEIGHT * 1.1);
+					sprintf_s(tmp, sizeof(tmp), "出界", timeQue.avg() * 1000);
+					putText(image, tmp, Point(0, 60), 2, 1, CV_RGB(255, 255, 0));
+				}
+				else
+				{
+					centerPoint = Point2f(pts[4].x - VIDEO_WIDTH / 2, VIDEO_HEIGHT / 2 - pts[4].y);
+				}
+				data2Send.push_back(centerPoint.x);
+				data2Send.push_back(centerPoint.y);
+				sendInfo2Slave(data2Send);
 			}
 			else
 			{
@@ -328,17 +354,7 @@ void processImage(MsgLink<DispMsg>* ld)
 
 			imshow(videoWindowName, image);
 			imshow(histWindowName, histimg);
-			if(isSameColor(centerColor, image.at<Vec3b>(Point_<int>(pts[4]))))
-			{
-				centerPoint = Point2f(pts[4].x - VIDEO_WIDTH / 2, VIDEO_HEIGHT / 2 - pts[4].y);
-			}
-			else
-			{
-				// 不是同一颜色，说明已出界
-				// 给一个出界的值
-				centerPoint = Point2f(VIDEO_WIDTH * 1.1, VIDEO_HEIGHT * 1.1);
-			}
-			sendInfo2Slave(centerPoint.x, centerPoint.y, 0, frameCount++);
+			
 			cout << (pts[4] - last) << "           \r";
 		}
 		switch(waitKey(10))
@@ -362,6 +378,9 @@ void processImage(MsgLink<DispMsg>* ld)
 			else
 				namedWindow(histWindowName, 0);
 			break;
+		case 'o':
+			// 人为设置为出界或恢复
+			out = !out;
 		default:
 			break;
 		}
@@ -370,23 +389,25 @@ outLoop:
 	ld->close();
 }
 
-void sendInfo2Slave(float x, float y, float z, float frame)
+void sendInfo2Slave(vector<float> &data)
 {
-	int16_t data[4];
-	// 转换为角度
-	x = (x / (VIDEO_HEIGHT / 2) * 180.0);
-	y = (y / (VIDEO_HEIGHT / 2) * 180.0);
-	// 转换为int16
-	data[0] = static_cast<int16_t>(x * 10.0 + 0.5);
-	data[1] = static_cast<int16_t>(y * 10.0 + 0.5);
-	data[2] = static_cast<int16_t>(z * 10.0 + 0.5);
-	data[3] = static_cast<int16_t>(frame + 0.5);
+	vector<uint16_t> dataTmp1;
+	vector<uint8_t> dataTmp2;
+	// 第一个数据为x坐标 转换为角度 放大100倍
+	dataTmp1.push_back(static_cast<uint16_t>(data[0] / (VIDEO_HEIGHT / 2) * (VIDEO_VIEW_ANGLE / 2)) * 100.0 + 0.5);
+	// 第二个数据为y坐标 转换为角度 放大100倍
+	dataTmp1.push_back(static_cast<uint16_t>(data[1] / (VIDEO_HEIGHT / 2) * (VIDEO_VIEW_ANGLE / 2)) * 100.0 + 0.5);
+	// 将其余转换为int16_t 放大100倍
+	for (int i = 2; i < data.size();++i)
+	{
+		dataTmp1.push_back(static_cast<uint16_t>(data[i] * 100.0 + 0.5));
+	}
 #if SlaveConnected
 	uint8_t frame[20];
 	auto size = makeDataFrame(data, frame, 4 * sizeof(int16_t));
 	slave.write(frame,size);
 #endif
-	printf("(%.1f, %.1f, %.1f) %.0f  ", x, y, z, frame);
+	printf("(%.1f, %.1f)", data[0], data[1]);
 }
 
 void onMouse(int event, int x, int y, int, void*)

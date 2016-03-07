@@ -2,6 +2,7 @@
 
 #include "msglink.hpp"
 #include <string>
+#include <vector>
 // OpenCV头文件
 #include <opencv2/highgui/highgui.hpp>
 using std::string;
@@ -17,6 +18,9 @@ using std::string;
 
 // 视频帧率
 #define VIDEO_FPS		30
+
+// 视频视角
+#define VIDEO_VIEW_ANGLE 90
 
 // 窗口名称
 const char *histWindowName = "直方图", *videoWindowName = "视频";
@@ -86,7 +90,7 @@ void processImage(MsgLink<DispMsg>* ld);
 /*
 向从机发送位置信息。
 */
-void sendInfo2Slave(float x, float y, float z, float frame);
+void sendInfo2Slave(std::vector<float> &data);
 // 鼠标事件回调函数
 void onMouse(int event, int x, int y, int, void*);
 /*
