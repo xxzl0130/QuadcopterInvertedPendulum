@@ -2,9 +2,8 @@
 
 #include "msglink.hpp"
 #include <string>
-#include <vector>
 // OpenCV头文件
-#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/core/matx.hpp>
 using std::string;
 
 // 缓冲区最大大小(4KB)

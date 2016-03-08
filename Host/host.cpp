@@ -1,3 +1,7 @@
+/*
+Todo: 取点处颜色滤波
+*/
+
 // 基础头文件
 #include <string>
 #include <iostream>
@@ -208,7 +212,7 @@ void initWindow()
 
 void processImage(MsgLink<DispMsg>* ld)
 {
-	Mat image, hsv, mask, hue, hist, histimg = Mat::zeros(200, 320, CV_8UC3), backproj;
+	Mat image,imgBak, hsv, mask, hue, hist, histimg = Mat::zeros(200, 320, CV_8UC3), backproj;
 	Rect trackWindow;
 	RotatedRect trackBox;//定义一个旋转的矩阵类对象
 	int hsize = 16;
@@ -237,6 +241,7 @@ void processImage(MsgLink<DispMsg>* ld)
 			timeQue.push(time[k] - time[k ^ 1]);
 			auto last = pointQue.back();
 			md->image.copyTo(image);
+			image.copyTo(imgBak);
 			cvtColor(image, hsv, CV_BGR2HSV);//将rgb摄像头帧转化成hsv空间的
 			if (trackObject)//trackObject初始化为0,或者按完键盘的'c'键后也为0，当鼠标单击松开后为-1
 			{
@@ -259,7 +264,7 @@ void processImage(MsgLink<DispMsg>* ld)
 					if(centerColor == Vec3b(0, 0, 0))
 					{
 						// 该选框选中后第一次检测时保存中心颜色
-						centerColor = image.at<Vec3b>(static_cast<int>(selection.x + selection.width / 2 + 0.5),
+						centerColor = imgBak.at<Vec3b>(static_cast<int>(selection.x + selection.width / 2 + 0.5),
 							static_cast<int>(selection.y + selection.height / 2 + 0.5));
 					}
 					
@@ -312,12 +317,12 @@ void processImage(MsgLink<DispMsg>* ld)
 				}
 				circle(image, pts[4], static_cast<int>(norm(pts[4] - ((pts[0] + pts[3]) / 2))), Scalar(0, 255, 0), 3, 8, 0);
 				
-				if (!isSameColor(centerColor, image.at<Vec3b>(Point_<int>(pts[4]))) || out)
+				if (!isSameColor(centerColor, imgBak.at<Vec3b>(Point_<int>(pts[4]))) || out)
 				{
 					// 不是同一颜色，说明已出界
 					// 给一个出界的值
 					centerPoint = Point2f(VIDEO_WIDTH * 1.1, VIDEO_HEIGHT * 1.1);
-					sprintf_s(tmp, sizeof(tmp), "出界");
+					sprintf_s(tmp, sizeof(tmp), "OUT");
 					putText(image, tmp, Point(0, 60), 2, 1, CV_RGB(255, 255, 0));
 				}
 				else
@@ -326,7 +331,9 @@ void processImage(MsgLink<DispMsg>* ld)
 				}
 				data2Send[0] = centerPoint.x;
 				data2Send[1] = centerPoint.y;
+				system("cls");
 				sendInfo2Slave(data2Send,2);
+				cout << endl << (pts[4] - last) << endl << centerColor << endl << imgBak.at<Vec3b>(Point_<int>(pts[4])) << endl;
 			}
 			else
 			{
@@ -344,8 +351,6 @@ void processImage(MsgLink<DispMsg>* ld)
 
 			imshow(videoWindowName, image);
 			imshow(histWindowName, histimg);
-			
-			cout << (pts[4] - last) << "           \r";
 		}
 		switch(waitKey(10))
 		{
@@ -441,13 +446,22 @@ void circleWork()
 
 bool isSameColor(Vec3b a, Vec3b b)
 {
-	auto diff = a - b;
-	if(sqrt(norm(diff)) > 32.0)
-	{
-		return false;
+	auto diff = Vec3b(abs(char(a[0] - b[0])),abs(char(a[1] - b[1])),abs(char(a[2] - b[2])));
+	cout << diff << endl;
+	try {
+		cout << norm(diff) << endl;
+		if (norm(diff) > 300.0)
+		{
+			return false;
+		}
+		else
+		{
+			return true;
+		}
 	}
-	else
+	catch(exception &err)
 	{
-		return true;
+		cerr << err.what() << endl;
+		system("pause");
 	}
 }
