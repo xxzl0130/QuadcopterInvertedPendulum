@@ -97,4 +97,6 @@ void onMouse(int event, int x, int y, int, void*);
 */
 void circleWork();
 // 判断两个颜色是否为相同颜色
-bool isSameColor(cv::Vec3b a, cv::Vec3b b);
+bool isSameColor(const cv::Vec3b &a, const cv::Vec3b &b);
+// 获得颜色，并滤波
+cv::Vec3b getColor(const cv::Mat& img, const cv::Point_<int>& point);

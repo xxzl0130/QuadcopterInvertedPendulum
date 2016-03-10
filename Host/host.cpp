@@ -1,7 +1,3 @@
-/*
-Todo: 取点处颜色滤波
-*/
-
 // 基础头文件
 #include <string>
 #include <iostream>
@@ -260,13 +256,6 @@ void processImage(MsgLink<DispMsg>* ld)
 				{
 					//此处的构造函数roi用的是Mat hue的矩阵头，且roi的数据指针指向hue，即共用相同的数据，select为其感兴趣的区域
 					Mat roi(hue, selection), maskroi(mask, selection);//mask保存的hsv的最小值
-
-					if(centerColor == Vec3b(0, 0, 0))
-					{
-						// 该选框选中后第一次检测时保存中心颜色
-						centerColor = imgBak.at<Vec3b>(static_cast<int>(selection.x + selection.width / 2 + 0.5),
-							static_cast<int>(selection.y + selection.height / 2 + 0.5));
-					}
 					
 					//calcHist()函数第一个参数为输入矩阵序列，第2个参数表示输入的矩阵数目，第3个参数表示将被计算直方图维数通道的列表，第4个参数表示可选的掩码函数
 					//第5个参数表示输出直方图，第6个参数表示直方图的维数，第7个参数为每一维直方图数组的大小，第8个参数为每一维直方图bin的边界
@@ -290,6 +279,9 @@ void processImage(MsgLink<DispMsg>* ld)
 							Point((i + 1)*binW, histimg.rows - val),
 							Scalar(buf.at<Vec3b>(i)), -1, 8);
 					}
+
+					// 将颜色清零
+					centerColor = Vec3b(0, 0, 0);
 				}
 
 				calcBackProject(&hue, 1, nullptr, hist, backproj, &phranges);//计算直方图的反向投影，计算hue图像0通道直方图hist的反向投影，并让入backproj中
@@ -316,8 +308,13 @@ void processImage(MsgLink<DispMsg>* ld)
 					circle(image, pts[i], 1, Scalar(255, 0, 0), 3, 8, 0);
 				}
 				circle(image, pts[4], static_cast<int>(norm(pts[4] - ((pts[0] + pts[3]) / 2))), Scalar(0, 255, 0), 3, 8, 0);
-				
-				if (!isSameColor(centerColor, imgBak.at<Vec3b>(Point_<int>(pts[4]))) || out)
+				if (centerColor == Vec3b(0, 0, 0))
+				{
+					// 该选框选中后第一次检测时保存中心颜色
+					//centerColor = imgBak.at<Vec3b>(Point_<int>(pts[4]));
+					centerColor = getColor(imgBak, Point_<int>(pts[4]));
+				}
+				if (!isSameColor(centerColor, getColor(imgBak, Point_<int>(pts[4]))) || out)
 				{
 					// 不是同一颜色，说明已出界
 					// 给一个出界的值
@@ -335,18 +332,14 @@ void processImage(MsgLink<DispMsg>* ld)
 				sendInfo2Slave(data2Send,2);
 				cout << endl << (pts[4] - last) << endl << centerColor << endl << imgBak.at<Vec3b>(Point_<int>(pts[4])) << endl;
 			}
-			else
-			{
-				centerColor = Vec3b(0, 0, 0);
-			}
 			if (selectObject && selection.width > 0 && selection.height > 0)
 			{
 				Mat roi(image, selection);
 				bitwise_not(roi, roi);//bitwise_not为将每一个bit位取反
 			}
-			sprintf_s(tmp, sizeof(tmp), "FPS:%2d", static_cast<int>(1.0 / timeQue.avg() + 0.5));
+			sprintf_s(tmp, sizeof(tmp), "%2d FPS", static_cast<int>(1.0 / timeQue.avg() + 0.5));
 			putText(image, tmp, Point(0, 20), 2, 1, CV_RGB(255, 255, 0));
-			sprintf_s(tmp, sizeof(tmp), "%.0fms", timeQue.avg() * 1000);
+			sprintf_s(tmp, sizeof(tmp), "%.0f ms", timeQue.avg() * 1000);
 			putText(image, tmp, Point(0, 40), 2, 1, CV_RGB(255, 255, 0));
 
 			imshow(videoWindowName, image);
@@ -444,24 +437,52 @@ void circleWork()
 	}
 }
 
-bool isSameColor(Vec3b a, Vec3b b)
+bool isSameColor(const cv::Vec3b &a, const cv::Vec3b &b)
 {
 	auto diff = Vec3b(abs(char(a[0] - b[0])),abs(char(a[1] - b[1])),abs(char(a[2] - b[2])));
-	cout << diff << endl;
-	try {
-		cout << norm(diff) << endl;
-		if (norm(diff) > 300.0)
-		{
-			return false;
-		}
-		else
-		{
-			return true;
-		}
-	}
-	catch(exception &err)
+	cout << norm(diff) << endl;
+	return norm(diff) < 64.0;
+}
+
+cv::Vec3b getColor(const cv::Mat& img, const cv::Point_<int>& point)
+{
+	Vec3b colorAvg(0, 0, 0), tmp;
+	Vec3i color(0, 0, 0);
+	bool flag;
+	int cnt = 0;
+	static const int pos[8][2] = { {1,0},{0,1},{-1,0},{0,-1},{1,1},{1,-1},{-1,-1},{-1,1} };
+	for (auto i = 0; i < 8;++i)
 	{
-		cerr << err.what() << endl;
-		system("pause");
+		flag = true;
+		try
+		{
+			tmp = img.at<Vec3b>(point.x + pos[i][0], point.y + pos[i][1]);
+		}
+		catch(exception &)
+		{
+			// 出错的话是不计入颜色滤波的
+			flag = false;
+			tmp = Vec3b(0, 0, 0);
+		}
+		if(flag)
+		{
+			++cnt;
+			for (auto j = 0; j < 3;++j)
+			{
+				color[j] += tmp[j];
+			}
+		}
 	}
+	if(cnt != 0)
+	{
+		for (auto i = 0; i < 3;++i)
+		{
+			colorAvg[i] = color[i] / cnt;
+		}
+	}
+	else
+	{
+		colorAvg = Vec3b(0, 0, 0);
+	}
+	return colorAvg;
 }
